@@ -6,7 +6,12 @@ import { CONCURRENCY } from '../config';
 interface PhenotypeCount {
   [key: string]: { description: string; count: number };
 }
+
 interface PhenotypeCountMerge {
+  [key: string]: { descriptions: Set<string>; count: number };
+}
+
+interface Statistics {
   [key: string]: number;
 }
 
@@ -54,17 +59,32 @@ class AnalysisService {
   private mergeCounts(countArrays: PhenotypeCount[]): PhenotypeCountMerge {
     return countArrays.reduce((acc, counts) => {
       for (const [key, value] of Object.entries(counts)) {
-        if (!acc[value.description]) {
-          acc[value.description] = value.count;
+        if (!acc[key]) {
+          acc[key] = { descriptions: new Set([value.description]), count: value.count };
         } else {
-          acc[value.description] += value.count;
+          acc[key].descriptions.add(value.description);
+          acc[key].count += value.count;
         }
+        // if (!acc[value.description]) {
+        //   acc[value.description] = value.count;
+        // } else {
+        //   acc[value.description] += value.count;
+        // }
       }
       return acc;
     }, {} as PhenotypeCountMerge);
   }
 
-  async analyze(): Promise<PhenotypeCountMerge> {
+  private getStatistics(mergedCounts: PhenotypeCountMerge): Statistics {
+    const statistics = {} as Statistics;
+    for (const value of Object.values(mergedCounts)) {
+      const descriptions = Array.from(value.descriptions).join(', ');
+      statistics[descriptions] = value.count;
+    }
+    return statistics;
+  }
+
+  async analyze(): Promise<Statistics> {
     const urls = await this.getPatientDataUrls();
     const chunkSize = Math.ceil(urls.length / +CONCURRENCY);
     let urlChunks = Array.from({ length: +CONCURRENCY }, (_, i) => urls.slice(i * chunkSize, (i + 1) * chunkSize));
@@ -72,11 +92,12 @@ class AnalysisService {
     const workerPromises = urlChunks.map(chunk => this.createWorker(chunk));
     const results = await Promise.all(workerPromises);
     const mergedCounts = this.mergeCounts(results);
+    const statistics = this.getStatistics(mergedCounts);
 
-    await dataService.sendStatistics(mergedCounts);
-    console.log('🚀 ~ AnalysisService ~ analyze ~ mergedCounts:', mergedCounts);
+    await dataService.sendStatistics(statistics);
+    console.log('🚀 ~ AnalysisService ~ analyze ~ statistics:', statistics);
 
-    return mergedCounts;
+    return statistics;
   }
 }
 
