@@ -31,7 +31,7 @@ This service efficiently pulls and analyzes medical records from a server, creat
 To run the application in development mode:
 
 ```
-npm run test
+npm run dev
 ```
 
 This command will start the application using `nodemon`, which will watch for file changes and automatically restart the server.
