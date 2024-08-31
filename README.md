@@ -11,7 +11,7 @@ This service efficiently pulls and analyzes medical records from a server, creat
 
 1. Clone this repository:
    ```
-   git clone https://github.com/dfamr01/customers-chat-server/tree/psifas
+   git clone https://github.com/dfamr01/psifas
    cd psifas-data-analysis
    ```
 
