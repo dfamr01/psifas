@@ -65,11 +65,6 @@ class AnalysisService {
           acc[key].descriptions.add(value.description);
           acc[key].count += value.count;
         }
-        // if (!acc[value.description]) {
-        //   acc[value.description] = value.count;
-        // } else {
-        //   acc[value.description] += value.count;
-        // }
       }
       return acc;
     }, {} as PhenotypeCountMerge);
