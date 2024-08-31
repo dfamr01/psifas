@@ -1,23 +1,32 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { SERVER_URL } from '../config';
 
-class HttpClient {
+type ExternalRequestMethod = 'get' | 'post';
+
+export class HttpClient {
   private client: AxiosInstance;
 
-  constructor() {
+  constructor(baseURL: string) {
     this.client = axios.create({
-      baseURL: SERVER_URL,
+      baseURL: baseURL,
     });
   }
 
-  async getFileToDownload<T>(url: string) {
+  async externalRequest<T>(url: string, method: ExternalRequestMethod = 'get', data?: any, config?: any): Promise<T> {
     try {
-      const response: AxiosResponse<T> = await axios.get(url, {
-        responseType: 'arraybuffer',
-      });
+      const request = {
+        url,
+        method,
+        ...config,
+      };
+
+      if (data && Object.keys(data).length > 0) {
+        request.data = data;
+      }
+
+      const response: AxiosResponse<T> = await axios(request);
       return response.data;
     } catch (error) {
-      console.error(`Error in GET request to ${url}:`, (error as Error).message);
+      console.error(`Error in ${method.toUpperCase()} request to ${url}:`, (error as Error).message);
       throw error;
     }
   }
@@ -42,5 +51,3 @@ class HttpClient {
     }
   }
 }
-
-export default new HttpClient();

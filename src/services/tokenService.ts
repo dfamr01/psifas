@@ -1,5 +1,5 @@
-import httpClient from '@/utils/httpClient';
-import { EMAIL } from '../config/index';
+import { HttpClient } from '@/utils/httpClient';
+import { EMAIL, SERVER_URL } from '../config/index';
 
 interface TokenResponse {
   bearer_token: string;
@@ -7,12 +7,13 @@ interface TokenResponse {
 
 class TokenService {
   private token: string | null = null;
+  httpClient = new HttpClient(SERVER_URL);
 
   async getToken(): Promise<string> {
     if (this.token) return this.token;
 
     try {
-      const response = await httpClient.get<TokenResponse>('/token', { email: EMAIL });
+      const response = await this.httpClient.get<TokenResponse>('/token', { email: EMAIL });
       this.token = response.bearer_token;
       return this.token;
     } catch (error) {

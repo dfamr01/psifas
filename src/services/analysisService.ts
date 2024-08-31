@@ -31,8 +31,8 @@ class AnalysisService {
           offset = address.offset;
         }
       }
-    } catch (e) {
-      console.error('Error in getPatientDataUrls', e);
+    } catch (error) {
+      console.error('Error in getPatientDataUrls', (error as Error).message);
     }
 
     return urls;
@@ -90,7 +90,7 @@ class AnalysisService {
     const statistics = this.getStatistics(mergedCounts);
 
     await dataService.sendStatistics(statistics);
-    console.log('🚀 ~ AnalysisService ~ analyze ~ statistics:', statistics);
+    console.log('AnalysisService ~ analyze ~ statistics:', statistics);
 
     return statistics;
   }

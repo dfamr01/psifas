@@ -2,6 +2,7 @@ import { parentPort, workerData } from 'worker_threads';
 import dataService from '../services/dataService';
 import unzipper from 'unzipper';
 import csvParser from 'csv-parser';
+import fs from 'fs';
 
 interface WorkerData {
   urls: string[];
@@ -10,7 +11,7 @@ interface WorkerData {
 interface PhenotypeCount {
   [key: string]: { description: string; count: number };
 }
-
+let count = 0;
 async function processUrls(urls: string[]): Promise<PhenotypeCount> {
   const phenotypeCounts: PhenotypeCount = {};
 
@@ -18,11 +19,10 @@ async function processUrls(urls: string[]): Promise<PhenotypeCount> {
     try {
       const patientData = await dataService.fetchPatientData(url);
       const zipBuffer = Buffer.from(patientData, 'binary');
-
-      // Extract and process the CSV file in memory
+      fs.writeFileSync(`data_${count++}.zip`, zipBuffer);
       const zip = await unzipper.Open.buffer(zipBuffer);
       const filePromises = zip.files.map(async file => {
-        const records = new Promise<any[]>((resolve, reject) => {
+        const recordPromise = new Promise<any[]>((resolve, reject) => {
           const results: any[] = [];
           file
             .stream()
@@ -31,7 +31,7 @@ async function processUrls(urls: string[]): Promise<PhenotypeCount> {
             .on('end', () => resolve(results))
             .on('error', error => reject(error));
         });
-        return records;
+        return recordPromise;
       });
 
       const allRecords = await Promise.all(filePromises);
