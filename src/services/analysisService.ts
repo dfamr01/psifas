@@ -3,19 +3,36 @@ import path from 'path';
 import dataService from './dataService';
 import { CONCURRENCY } from '../config';
 
+/**
+ * Represents the structure of phenotype counts.
+ */
 interface PhenotypeCount {
   [key: string]: { description: string; count: number };
 }
 
+/**
+ * Represents the structure of merged phenotype counts.
+ */
 interface PhenotypeCountMerge {
   [key: string]: { descriptions: Set<string>; count: number };
 }
 
+/**
+ * Represents the structure of statistics.
+ */
 interface Statistics {
   [key: string]: number;
 }
 
+/**
+ * Service for analyzing patient data and generating statistics.
+ */
 class AnalysisService {
+  /**
+   * Fetches patient data URLs from the data service.
+   * @returns {Promise<string[]>} A promise that resolves to an array of URLs.
+   * @private
+   */
   private async getPatientDataUrls(): Promise<string[]> {
     const urls: string[] = [];
     let offset = 0;
@@ -38,6 +55,12 @@ class AnalysisService {
     return urls;
   }
 
+  /**
+   * Creates a worker to process a chunk of URLs.
+   * @param {string[]} urls - An array of URLs to be processed by the worker.
+   * @returns {Promise<PhenotypeCount>} A promise that resolves to the phenotype counts from the worker.
+   * @private
+   */
   private createWorker(urls: string[]): Promise<PhenotypeCount> {
     const workerPath = path.resolve(__dirname, '../workers/analysisWorker.ts');
     return new Promise((resolve, reject) => {
@@ -56,6 +79,12 @@ class AnalysisService {
     });
   }
 
+  /**
+   * Merges multiple phenotype count arrays into a single merged count object.
+   * @param {PhenotypeCount[]} countArrays - An array of phenotype count objects to merge.
+   * @returns {PhenotypeCountMerge} The merged phenotype counts.
+   * @private
+   */
   private mergeCounts(countArrays: PhenotypeCount[]): PhenotypeCountMerge {
     return countArrays.reduce((acc, counts) => {
       for (const [key, value] of Object.entries(counts)) {
@@ -70,6 +99,12 @@ class AnalysisService {
     }, {} as PhenotypeCountMerge);
   }
 
+  /**
+   * Generates statistics from merged phenotype counts.
+   * @param {PhenotypeCountMerge} mergedCounts - The merged phenotype counts.
+   * @returns {Statistics} The generated statistics.
+   * @private
+   */
   private getStatistics(mergedCounts: PhenotypeCountMerge): Statistics {
     const statistics = {} as Statistics;
     for (const value of Object.values(mergedCounts)) {
@@ -79,6 +114,11 @@ class AnalysisService {
     return statistics;
   }
 
+  /**
+   * Performs the analysis by fetching URLs, processing them with workers,
+   * merging the results, and generating statistics.
+   * @returns {Promise<Statistics>} A promise that resolves to the generated statistics.
+   */
   async analyze(): Promise<Statistics> {
     const urls = await this.getPatientDataUrls();
     const chunkSize = Math.ceil(urls.length / +CONCURRENCY);
