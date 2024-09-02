@@ -18,6 +18,7 @@ class TokenService {
       return this.token;
     } catch (error) {
       console.error('Failed to retrieve token:', (error as Error).message);
+      console.error(`Failed to retrieve token error: ${(error as any)?.response?.statusText}, error data: ${(error as any)?.response?.data}`);
       throw error;
     }
   }
