@@ -1,7 +1,7 @@
 import { Worker } from 'worker_threads';
 import path from 'path';
 import dataService from './dataService';
-import { CONCURRENCY } from '../config';
+import os from 'os';
 
 /**
  * Represents the structure of phenotype counts.
@@ -28,6 +28,8 @@ interface Statistics {
  * Service for analyzing patient data and generating statistics.
  */
 class AnalysisService {
+  private readonly maxWorkers: number = os.cpus().length;
+
   /**
    * Fetches patient data URLs from the data service.
    * @returns {Promise<string[]>} A promise that resolves to an array of URLs.
@@ -121,8 +123,8 @@ class AnalysisService {
    */
   async analyze(): Promise<Statistics> {
     const urls = await this.getPatientDataUrls();
-    const chunkSize = Math.ceil(urls.length / +CONCURRENCY);
-    let urlChunks = Array.from({ length: +CONCURRENCY }, (_, i) => urls.slice(i * chunkSize, (i + 1) * chunkSize));
+    const chunkSize = Math.ceil(urls.length / this.maxWorkers);
+    let urlChunks = Array.from({ length: this.maxWorkers }, (_, i) => urls.slice(i * chunkSize, (i + 1) * chunkSize));
     urlChunks = urlChunks.filter(chunk => chunk.length > 0);
     const workerPromises = urlChunks.map(chunk => this.createWorker(chunk));
     const results = await Promise.all(workerPromises);
